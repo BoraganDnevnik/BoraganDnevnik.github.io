@@ -393,6 +393,7 @@
                 if (!studentsSnap.empty) {
                     globalStudents = [];
                     studentsSnap.forEach(doc => globalStudents.push(doc.data()));
+                    globalStudents.sort((a, b) => a.id - b.id);
                 } else {
                     // Первоначальное заполнение учениками
                     const defaultStudents = [
@@ -962,7 +963,8 @@
                 document.getElementById('parentError').classList.add('show');
                 return;
             }
-            const student = globalStudents[id];
+            const student = globalStudents.find(s => s.id === id);
+            if (!student)
             currentMode = 'parent';
             currentParentStudent = student;
             currentTeacher = null;
