@@ -778,10 +778,18 @@
                     globalStudents = defaultStudents;
                 }
 
-                const schedSnap = await db.collection("schedules").get();
+                                const schedSnap = await db.collection("schedules").get();
                 if (!schedSnap.empty) {
                     globalSchedules = {};
-                    schedSnap.forEach(doc => globalSchedules[doc.id] = doc.data().schedule);
+                    schedSnap.forEach(doc => {
+                        const data = doc.data();
+                        // Собираем расписание из полей day0...day4
+                        const schedule = [];
+                        for (let i = 0; i < 5; i++) {
+                            schedule.push(data['day' + i] || []);
+                        }
+                        globalSchedules[doc.id] = schedule;
+                    });
                 } else {
                     const defaultSchedules = {
                         "1А": [["Русский язык","Математика","Физкультура","Музыка"],["Литературное чтение","Русский язык","ИЗО","Окружающий мир"],["Математика","Чеченский язык","Русский язык","Технология"],["Окружающий мир","Физкультура","Литературное чтение","Музыка"],["Русский язык","Математика","ИЗО","Чеченский язык"]],
@@ -806,7 +814,12 @@
                     };
                     const batch = db.batch();
                     for (const cls in defaultSchedules) {
-                        batch.set(db.collection("schedules").doc(cls), { schedule: defaultSchedules[cls] });
+                        const days = defaultSchedules[cls];
+                        const docData = {};
+                        days.forEach((lessons, idx) => {
+                            docData['day' + idx] = lessons;
+                        });
+                        batch.set(db.collection("schedules").doc(cls), docData);
                     }
                     await batch.commit();
                     globalSchedules = defaultSchedules;
